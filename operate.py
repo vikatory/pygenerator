@@ -107,9 +107,9 @@ class PExtractClass(object):
 
 		iorelated.print_list(matchs)
 		a,b,c = match_pair(content, "{","}")
-		a,b,c = match_pair(content, "#if","#endif")
+		# a,b,c = match_pair(content, "#if","#endif")
 		print "---------------------------"
-		print b
+		print "====%s===="%b
 		print "---------------------------"
 
 		print 111111111111111111111111111111111111111111111111111111
@@ -150,26 +150,36 @@ def match_pair(content, head, tail, pos=0):  # pos为匹配的开始位置
 	#-------------------------------------------------------------------------
 	iLeftCnt, iRightCnt, iLeft, iRight, iHeadLen, iTailLen = 0, 0, 0, 0, len(head), len(tail)
 	content = content[pos:]
-	for i in xrange(len(content)):  # 考虑这种特殊配对(if, ifend)(ifend, if), 待优化
+	i, contentLen = 0, len(content)
+	while i < contentLen:  # 考虑这种特殊配对(if, ifend)(ifend, if), 待优化
 		sHeadTry = content[i:i+iHeadLen]
 		sTailTry = content[i:i+iTailLen]
 		if iLeftCnt == 0:
 			if sHeadTry == head:
 				iLeftCnt += 1
 				iLeft = i
+				i += iHeadLen
+			else:
+				i += 1
 		else:
 			if sHeadTry == head and sTailTry == tail:
 				if iHeadLen >= iTailLen:
 					iLeftCnt += 1
+					i += iHeadLen
 				else:
 					iRightCnt += 1
+					i += iTailLen
 			elif sHeadTry == head and sTailTry != tail:
 				iLeftCnt += 1
+				i += iHeadLen
 			elif sHeadTry != head and sTailTry == tail:
 				iRightCnt += 1
+				i += iTailLen
+			else:
+				i += 1
 		if iLeftCnt == iRightCnt and iLeftCnt != 0:
 			iRight = i
-			return content[:iLeft], content[iLeft:iRight+1], content[iRight+1:]
+			return content[:iLeft], content[iLeft:iRight], content[iRight:]
 	return content, "", ""  # 找不到匹配的返回值，content已被裁剪了
 
 
