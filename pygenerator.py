@@ -14,11 +14,6 @@ cocos_root = "E:/DATA_GIT/cocos2dx/project/CCGamePy/cocos2d/cocos"
 cxxfilename = cocos_root + "/base/CCDirector.h"
 
 
-
-
-
-
-
 def build_namespace(cursor, namespaces=[]):
     '''
     build the full namespace for a specific cursor
@@ -56,11 +51,6 @@ class Generator(object):
 
 
 			# print content
-			print
-
-
-
-
 			pass
 			# self._deep_iterate(tu.cursor)
 
@@ -95,10 +85,7 @@ iorelated.print_list(lCxxFileNames)
 generator = Generator(lCxxFileNames)
 generator.parse_headers()
 
-#if __name__ == '__main__':
-
-
-	#print "================================================================="
+#print "================================================================="
 
 
 

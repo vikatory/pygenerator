@@ -106,6 +106,11 @@ class PExtractClass(object):
 		matchs = filter(lambda x:not x.startswith("enum"), matchs)  # 类声明列表
 
 		iorelated.print_list(matchs)
+		a,b,c = match_pair(content, "{","}")
+		a,b,c = match_pair(content, "#if","#endif")
+		print "---------------------------"
+		print b
+		print "---------------------------"
 
 		print 111111111111111111111111111111111111111111111111111111
 		#-----------------------------------------------------------------------
@@ -140,23 +145,32 @@ def search_and_replace_all_test(content, sPatt, sTar):
 		mo = patt.search(content)
 	return ocontent
 
-def match_bracket(sCon, sBrk, cnt=1):  # 添加匹配的起始位置
+def match_pair(content, head, tail, pos=0):  # pos为匹配的开始位置
 	''' 匹配成对的模式，例如括号，if,endif等 '''
 	#-------------------------------------------------------------------------
-	lBrk, rBrk = sBrk[0], sBrk[1]
-	brkCnt = 0
-	start = 0
-	end = 0
-	for i,s in enumerate(sCon):
-		if s == lBrk:
-			if brkCnt == 0:
-				start = i
-			brkCnt += 1
-		if s == rBrk:
-			brkCnt -= 1
-			if brkCnt == 0:
-				end = i
-				return sCon[:start], sCon[start:end+1], sCon[end+1:]
-	return sCon, "", ""  # 找不到匹配的返回值
+	iLeftCnt, iRightCnt, iLeft, iRight, iHeadLen, iTailLen = 0, 0, 0, 0, len(head), len(tail)
+	content = content[pos:]
+	for i in xrange(len(content)):  # 考虑这种特殊配对(if, ifend)(ifend, if), 待优化
+		sHeadTry = content[i:i+iHeadLen]
+		sTailTry = content[i:i+iTailLen]
+		if iLeftCnt == 0:
+			if sHeadTry == head:
+				iLeftCnt += 1
+				iLeft = i
+		else:
+			if sHeadTry == head and sTailTry == tail:
+				if iHeadLen >= iTailLen:
+					iLeftCnt += 1
+				else:
+					iRightCnt += 1
+			elif sHeadTry == head and sTailTry != tail:
+				iLeftCnt += 1
+			elif sHeadTry != head and sTailTry == tail:
+				iRightCnt += 1
+		if iLeftCnt == iRightCnt and iLeftCnt != 0:
+			iRight = i
+			return content[:iLeft], content[iLeft:iRight+1], content[iRight+1:]
+	return content, "", ""  # 找不到匹配的返回值，content已被裁剪了
+
 
 
