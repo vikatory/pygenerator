@@ -1,0 +1,6 @@
+.ropeproject
+.settings
+backup
+.project
+.pydevproject
+*.pyc
