@@ -7,6 +7,7 @@ Created on 2015年3月30日
 '''
 import re
 import iorelated
+from iorelated import Config
 import fileinfo
 import operate
 
@@ -42,7 +43,7 @@ class Generator(object):
 
 	def parse_headers(self):
 		for header in self.__headers:
-			prevName = config["ProjectRoot"]+"/"+config["PrevDir"]+"/pre_"+fileinfo.QFile(header).basename()+".h"
+			prevName = config.ProjectRoot()+"/"+config.PrevDir()+"/pre_"+fileinfo.QFile(header).basename()+".h"
 			content = iorelated.read_file(header, True)
 			content = operate.Parser().parse(content, "remove_comments")
 			content = operate.Parser().parse(content, "remove_unused")
@@ -66,28 +67,14 @@ class Generator(object):
 
 
 
-config = {
-	"EngineRoot":"E:/DATA_GIT/cocos2dx/project/CCGamePy/cocos2d",
-	"ProjectRoot":"E:/DATA_GIT/cocos2dx/project/CCGamePy",
-	# "FileName":["CCDirector"],
-	"FileName":["CCGLView","CCDirector","CCScene","CCTextureCache","CCNode","CCLayer"],
-	"ignoreInherit":["Ref"],
-	"OutputDir":"Classes/pycocos2d",
-	"PrevDir":"Classes/pycocos2d",
-	"ModuleName":"cc",
-}
 
-
-
-lCxxFileNames,conflictList = iorelated.detect_walk_search(config["EngineRoot"], config["FileName"])
+config = Config()
+lCxxFileNames,conflictList = iorelated.detect_walk_search(config.EngineRoot(), config.FileName())
 iorelated.print_list(lCxxFileNames)
 # @Note:对不同文件夹有同名文件的情况不做处理，自行处理，输出到conflictList提示一下
 generator = Generator(lCxxFileNames)
 generator.parse_headers()
 
 #print "================================================================="
-
-
-
 
 

@@ -6,6 +6,8 @@ Created on 2015年3月30日
 @author: ming
 '''
 import os
+import ConfigParser
+from common import Singleton
 
 
 def detect_walk_search(root, nameList):
@@ -55,6 +57,51 @@ def print_list(lData):
 	for x in lData:
 		print "\t", x
 	print "]"
+
+
+class Config(Singleton):
+	__hasParsered = False
+	def __init__(self):
+		if not self.__hasParsered:
+			self.parse()
+
+	def parse(self):
+		config = ConfigParser.ConfigParser()
+		config.read("config.ini")
+		#-----------------------------------------------------------------------
+		self.__EngineRoot = config.get("search_path", "EngineRoot")
+		self.__ProjectRoot = config.get("search_path", "ProjectRoot")
+		self.__FileName = config.get("search_path", "FileName")
+		self.__IgnoreInherit = config.get("search_path", "IgnoreInherit")
+		self.__OutputDir = config.get("search_path", "OutputDir")
+		self.__PrevDir = config.get("search_path", "PrevDir")
+		self.__ModuleName = config.get("search_path", "ModuleName")
+		#-----------------------------------------------------------------------
+		self.__FileName = self.__FileName.strip()[1:-1].split(",")
+		self.__FileName = map(lambda s:s.strip()[1:-1], self.__FileName)
+		self.__IgnoreInherit = self.__IgnoreInherit.strip()[1:-1].split(",")
+		self.__IgnoreInherit = map(lambda s:s.strip()[1:-1], self.__IgnoreInherit)
+
+	def EngineRoot(self):
+		return self.__EngineRoot
+
+	def ProjectRoot(self):
+		return self.__ProjectRoot
+
+	def FileName(self):
+		return self.__FileName
+
+	def IgnoreInherit(self):
+		return self.__IgnoreInherit
+
+	def OutputDir(self):
+		return self.__OutputDir
+
+	def PrevDir(self):
+		return self.__PrevDir
+
+	def ModuleName(self):
+		return self.__ModuleName
 
 
 
