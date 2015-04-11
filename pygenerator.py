@@ -7,9 +7,10 @@ Created on 2015年3月30日
 '''
 import re
 import iorelated
-from iorelated import Config
 import fileinfo
 import operate
+from iorelated import Config
+from fileinfo import QFile
 
 cocos_root = "E:/DATA_GIT/cocos2dx/project/CCGamePy/cocos2d/cocos"
 cxxfilename = cocos_root + "/base/CCDirector.h"
@@ -43,7 +44,7 @@ class Generator(object):
 
 	def parse_headers(self):
 		for header in self.__headers:
-			prevName = config.ProjectRoot()+"/"+config.PrevDir()+"/pre_"+fileinfo.QFile(header).basename()+".h"
+			prevName = config.PrevDir()+"/pre_"+fileinfo.QFile(header).basename()+".h"
 			content = iorelated.read_file(header, True)
 			content = operate.Parser().parse(content, "remove_comments")
 			content = operate.Parser().parse(content, "remove_unused")

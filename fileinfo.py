@@ -24,6 +24,9 @@ class QFile(object):
 		name = name.rpartition(".")[0]
 		return name
 
+	def fullname(self):
+		return self.__filename
+
 
 
 

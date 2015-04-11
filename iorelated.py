@@ -8,6 +8,7 @@ Created on 2015年3月30日
 import os
 import ConfigParser
 from common import Singleton
+from fileinfo import QFile
 
 
 def detect_walk_search(root, nameList):
@@ -78,9 +79,9 @@ class Config(Singleton):
 		self.__ModuleName = config.get("search_path", "ModuleName")
 		#-----------------------------------------------------------------------
 		self.__FileName = self.__FileName.strip()[1:-1].split(",")
-		self.__FileName = map(lambda s:s.strip()[1:-1], self.__FileName)
+		self.__FileName = map(lambda s:s.strip(), self.__FileName)
 		self.__IgnoreInherit = self.__IgnoreInherit.strip()[1:-1].split(",")
-		self.__IgnoreInherit = map(lambda s:s.strip()[1:-1], self.__IgnoreInherit)
+		#-----------------------------------------------------------------------
 
 	def EngineRoot(self):
 		return self.__EngineRoot
@@ -98,7 +99,8 @@ class Config(Singleton):
 		return self.__OutputDir
 
 	def PrevDir(self):
-		return self.__PrevDir
+		sPrevDir = self.__ProjectRoot+"/"+self.__PrevDir
+		return sPrevDir
 
 	def ModuleName(self):
 		return self.__ModuleName
