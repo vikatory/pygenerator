@@ -28,7 +28,8 @@ class Parser(Singleton):
 			result = PExtractEnum(content).result()
 			return result
 		if sParseType == "extract_struct":
-			pass
+			result = PExtractStruct(content).result()
+			return result
 		if sParseType == "extract_func":
 			pass
 		if sParseType == "extract_member":
@@ -135,6 +136,38 @@ class PExtractEnum(object):
 
 	def result(self):
 		return self.extract_enum()
+
+
+class PExtractStruct(object):
+	''' 提取结构体的内容 '''
+	def __init__(self, content):
+		self.__content = content
+
+	def extract_struct(self):  # 只提取第一层的类，嵌套的类用稍后处理
+		content = " "+self.__content+" "  # 兼容匹配
+		patt = re.compile("(?P<match>[\s;\{\}](typedef)?\s*struct\s[^\{\}]+\{)")
+		matchs1 = patt.findall(content)
+		matchs1 = map(lambda x:x[1:].strip() if x[0] in ["{","}",";"] else x,
+				map(lambda (a,b):a[:-1].strip(), matchs1))
+		result = map(lambda x:(x, match_pair(content, "{","}", content.find(x)+len(x))[1]), matchs1)
+		lTmp = []
+		for s, detail in result:
+			if s.startswith("typedef"):
+				name = match_pair(content,"}",";",content.find(detail)+len(detail)-1)[1]
+				name = name[1:-1].strip()
+			else:
+				name = filter(lambda m: m.strip()!="", s.split(" "))[-1]
+			lTmp.append((name, detail))
+		result = lTmp
+		#-----------------------------------------------------------------------
+		return result
+
+	def result(self):
+		return self.extract_struct()
+
+
+
+
 
 
 

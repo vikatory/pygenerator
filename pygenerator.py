@@ -5,7 +5,6 @@ Created on 2015年3月30日
 
 @author: ming
 '''
-import re
 import iorelated
 import fileinfo
 import operate
@@ -53,12 +52,13 @@ class Generator(object):
 			elements.extend(header, result, "class")
 			result = parser.parse(content, "extract_enum")
 			elements.extend(header, result, "enum")
+			result = parser.parse(content, "extract_struct")
+			elements.extend(header, result, "struct")
 			iorelated.write_file(prevName, content)
 
 
 			# print content
 			pass
-			# self._deep_iterate(tu.cursor)
 
 	def _deep_iterate(self, cursor, depth=0):
 		pass
