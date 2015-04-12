@@ -9,11 +9,9 @@ import re
 import iorelated
 import fileinfo
 import operate
+import data
 from iorelated import Config
 from fileinfo import QFile
-
-cocos_root = "E:/DATA_GIT/cocos2dx/project/CCGamePy/cocos2d/cocos"
-cxxfilename = cocos_root + "/base/CCDirector.h"
 
 
 def build_namespace(cursor, namespaces=[]):
@@ -44,11 +42,17 @@ class Generator(object):
 
 	def parse_headers(self):
 		for header in self.__headers:
+			parser = operate.Parser.getInstance()
+			elements = data.Elements.getInstance()
 			prevName = config.PrevDir()+"/pre_"+fileinfo.QFile(header).basename()+".h"
 			content = iorelated.read_file(header, True)
-			content = operate.Parser().parse(content, "remove_comments")
-			content = operate.Parser().parse(content, "remove_unused")
-			content = operate.Parser().parse(content, "extract_class")
+			content = parser.parse(content, "remove_comments")
+			content = parser.parse(content, "remove_unused")
+			elements.addHeaders(header, content, "header")
+			result = parser.parse(content, "extract_class")
+			elements.extend(header, result, "class")
+			result = parser.parse(content, "extract_enum")
+			elements.extend(header, result, "enum")
 			iorelated.write_file(prevName, content)
 
 
@@ -69,7 +73,7 @@ class Generator(object):
 
 
 
-config = Config()
+config = Config.getInstance()
 lCxxFileNames,conflictList = iorelated.detect_walk_search(config.EngineRoot(), config.FileName())
 iorelated.print_list(lCxxFileNames)
 # @Note:对不同文件夹有同名文件的情况不做处理，自行处理，输出到conflictList提示一下

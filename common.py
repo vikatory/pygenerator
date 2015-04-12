@@ -16,6 +16,8 @@ class Singleton(object):
 		if not hasattr(cls, "_instance"):
 			org = super(Singleton, cls)
 			cls._instance = org.__new__(cls, *args, **kw)
+		else:
+			raise "请用getInstance获取实例"  # 防止__init__被反复的调用
 		return cls._instance
 
 	@classmethod

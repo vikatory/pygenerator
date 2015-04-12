@@ -16,17 +16,17 @@ class Parser(Singleton):
 
 	def parse(self, content, sParseType):
 		if sParseType == "remove_comments":
-			content = PRemoveComments(content).result()
-			return content
+			result = PRemoveComments(content).result()
+			return result
 		if sParseType == "remove_unused":
-			content = PRemoveUnused(content).result()
-			return content
+			result = PRemoveUnused(content).result()
+			return result
 		if sParseType == "extract_class":  # 先解析类，因为类能包含其他类型
-			content = PExtractClass(content).result()
-			return content
-			pass
+			result = PExtractClass(content).result()
+			return result
 		if sParseType == "extract_enum":
-			pass
+			result = PExtractEnum(content).result()
+			return result
 		if sParseType == "extract_struct":
 			pass
 		if sParseType == "extract_func":
@@ -80,7 +80,7 @@ class PRemoveUnused(object):
 			content = content.rpartition(sEnd)[0]+"\n"
 		#-----------------------------------------------------------------------
 		content = search_and_replace_all(content, "#include.+\n", "", True)
-		content = search_and_replace_all(content, "\n.*class\s[^\n\{]*;", "\n", True)  # 删除声明的类/友元类，没有定义体
+		content = search_and_replace_all(content, "\n.*class\s[^\n\{]*;", "\n", True)  # 剔除声明的类/友元类，没有定义体
 		content = search_and_replace_all(content, "typedef\s[^\{\};]*;", "", True)  # 剔除类型的定义，如typedef void* id;
 		content = search_and_replace_all(content, "using\s[^\{\}\(\);]*;", "", True)
 		content = search_and_replace_all(content, "#if.+\n\s*#endif\n", "", True)
@@ -97,27 +97,48 @@ class PExtractClass(object):
 	def __init__(self, content):
 		self.__content = content
 
-	def extract_class(self):  # 只提取第一层的类，嵌套的类用稍后处理
+	def extract_class(self):
 		content = " "+self.__content+" "  # 兼容匹配
 		patt = re.compile("(?P<match>[\s;\{\}](enum)?\s*class\s[^\{\}]+\{)")
 		matchs = patt.findall(content)
 		matchs = map(lambda x:x[1:].strip() if x[0] in ["{","}",";"] else x,
 				map(lambda (a,b):a[:-1].strip(), matchs))
 		matchs = filter(lambda x:not x.startswith("enum"), matchs)  # 类声明列表
-
-		iorelated.print_list(matchs)
-		a,b,c = match_pair(content, "{","}")
-		# a,b,c = match_pair(content, "#if","#endif")
-		print "---------------------------"
-		print "====%s===="%b
-		print "---------------------------"
-
-		print 111111111111111111111111111111111111111111111111111111
-		#-----------------------------------------------------------------------
-		return content
+		result = map(lambda x:(x, match_pair(content, "{","}", content.find(x)+len(x))[1]), matchs)
+		return result
 
 	def result(self):
 		return self.extract_class()
+
+
+class PExtractEnum(object):
+	''' 提取枚举的内容 '''
+	def __init__(self, content):
+		self.__content = content
+
+	def extract_enum(self):  # 只提取第一层的类，嵌套的类用稍后处理
+		content = " "+self.__content+" "  # 兼容匹配
+		patt = re.compile("(?P<match>[\s;\{\}]enum\s+(class)?\s*[^\{\}]+\{)")
+		# 没名字的enum没有提取
+		matchs1 = patt.findall(content)
+		matchs1 = map(lambda x:x[1:].strip() if x[0] in ["{","}",";"] else x,
+				map(lambda (a,b):a[:-1].strip(), matchs1))
+		result = map(lambda x:(x, match_pair(content, "{","}", content.find(x)+len(x))[1]), matchs1)
+		#-----------------------------------------------------------------------
+		patt = re.compile("(?P<match>[\s;\{\}]typedef\s+enum\s+\{[^\{\}]+\}[^;]+;)")
+		matchs2 = patt.findall(content)
+		matchs2 = map(lambda x:x[1:].strip() if x[0] in ["{","}",";"] else x,
+				map(lambda a:a[:-1].strip(), matchs2))
+		result += map(lambda x:(x[x.rfind("}")+1:].strip(), match_pair(x, "{","}")[1]), matchs2)
+		#-----------------------------------------------------------------------
+		return result
+
+	def result(self):
+		return self.extract_enum()
+
+
+
+
 
 
 
