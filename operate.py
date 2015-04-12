@@ -117,7 +117,7 @@ class PExtractEnum(object):
 	def __init__(self, content):
 		self.__content = content
 
-	def extract_enum(self):  # 只提取第一层的类，嵌套的类用稍后处理
+	def extract_enum(self):
 		content = " "+self.__content+" "  # 兼容匹配
 		patt = re.compile("(?P<match>[\s;\{\}]enum\s+(class)?\s*[^\{\}]+\{)")
 		# 没名字的enum没有提取
@@ -143,7 +143,7 @@ class PExtractStruct(object):
 	def __init__(self, content):
 		self.__content = content
 
-	def extract_struct(self):  # 只提取第一层的类，嵌套的类用稍后处理
+	def extract_struct(self):
 		content = " "+self.__content+" "  # 兼容匹配
 		patt = re.compile("(?P<match>[\s;\{\}](typedef)?\s*struct\s[^\{\}]+\{)")
 		matchs1 = patt.findall(content)
