@@ -13,28 +13,6 @@ from iorelated import Config
 from fileinfo import QFile
 
 
-def build_namespace(cursor, namespaces=[]):
-    '''
-    build the full namespace for a specific cursor
-    '''
-    if cursor:
-        parent = cursor.semantic_parent
-        if parent:
-            if parent.kind == cindex.CursorKind.NAMESPACE or parent.kind == cindex.CursorKind.CLASS_DECL:
-                namespaces.append(parent.displayname)
-                build_namespace(parent, namespaces)
-
-    return namespaces
-
-def get_namespaced_name(declaration_cursor):
-    ns_list = build_namespace(declaration_cursor, [])
-    ns_list.reverse()
-    ns = "::".join(ns_list)
-    if len(ns) > 0:
-        return ns + "::" + declaration_cursor.displayname
-    return declaration_cursor.displayname
-
-
 class Generator(object):
 	def __init__(self, lCxxFileNames):
 		self.__headers = lCxxFileNames
@@ -43,22 +21,22 @@ class Generator(object):
 		for header in self.__headers:
 			parser = operate.Parser.getInstance()
 			elements = data.Elements.getInstance()
-			prevName = config.PrevDir()+"/pre_"+fileinfo.QFile(header).basename()+".h"
+			prevName = config.PrevDir()+"/pre_"+QFile(header).basename()+".h"
+			headername = QFile(header).basename()
 			content = iorelated.read_file(header, True)
 			content = parser.parse(content, "remove_comments")
 			content = parser.parse(content, "remove_unused")
-			elements.addHeaders(header, content, "header")
+			elements.addHeaders(headername, content, "header")
 			result = parser.parse(content, "extract_class")
-			elements.extend(header, result, "class")
+			elements.extend(headername, result, "class")
 			result = parser.parse(content, "extract_enum")
-			elements.extend(header, result, "enum")
+			elements.extend(headername, result, "enum")
 			result = parser.parse(content, "extract_struct")
-			elements.extend(header, result, "struct")
+			elements.extend(headername, result, "struct")
 			iorelated.write_file(prevName, content)
+		elements.build_namespace()
 
 
-			# print content
-			pass
 
 	def _deep_iterate(self, cursor, depth=0):
 		pass

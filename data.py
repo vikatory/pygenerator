@@ -21,7 +21,7 @@ class sContent(object):
 		return self.__type
 
 	def headername(self):
-		self.__headername
+		return self.__headername
 
 	def breaf(self):
 		return self.__breaf
@@ -43,12 +43,18 @@ class Elements(Singleton):
 			if header in map(lambda x:x.headername(), self.__headers):
 				raise "%s已添加"%header
 			item = sContent("header", header, header, content)
-			self.__headers.append(item)
+			if item not in self.__headers:
+				self.__headers.append(item)
 
 	def extend(self, header, lData, stype):
 		for breaf, detail in lData:
 			item = sContent(stype, header, breaf, detail)
 			self.__elements.append(item)
+
+	def build_namespace(self):
+		for header in self.__headers:
+			print header.headername()
+		pass
 
 
 
