@@ -35,6 +35,7 @@ class Generator(object):
 			elements.extend(headername, result, "struct")
 			iorelated.write_file(prevName, content)
 		elements.build_namespace()
+		elements.build_element()
 
 
 

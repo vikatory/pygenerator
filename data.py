@@ -91,6 +91,49 @@ class Elements(Singleton):
 						item.build_namespace(item_n.name())
 			# print_list(map(lambda x:(x.name(),x.namespace()), items))
 
+	def build_element(self):
+		self.build_class()
+		self.build_enum()
+		self.build_struct()
+
+	def build_class(self):
+		pass
+
+	def build_enum(self):
+		items = filter(lambda x:x.type()=="enum", self.__elements)
+		for item in items:
+			name = item.name()
+			namespace = item.namespace()
+			detail = item.detail()
+			EnumObj = sEnum(name, namespace, detail)
+		print items
+
+	def build_struct(self):
+		pass
+
+
+
+class sClass(object):
+	def __init__(self):
+		pass
+
+class sEnum(object):
+	def __init__(self, name, namespace, detail):
+		self.__name = name
+		self.__namespace = namespace
+		self.__content = detail
+		self.parse_elem()
+
+	def parse_elem(self):
+		print self.__content
+		pass
+
+	def serialize(self):
+		pass
+
+class sStruct(object):
+	def __init__(self):
+		pass
 
 
 
