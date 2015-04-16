@@ -36,18 +36,7 @@ class Generator(object):
 			iorelated.write_file(prevName, content)
 		elements.build_namespace()
 		elements.build_element()
-
-
-
-	def _deep_iterate(self, cursor, depth=0):
-		pass
-
-	def in_listed_classes(self, class_name):
-		pass
-
-	def should_skip(self, class_name, method_name, verbose=False):
-		pass
-
+		elements.generate()
 
 
 
@@ -59,6 +48,5 @@ iorelated.print_list(lCxxFileNames)
 generator = Generator(lCxxFileNames)
 generator.parse_headers()
 
-#print "================================================================="
 
 

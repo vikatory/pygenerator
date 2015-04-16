@@ -7,6 +7,7 @@ Created on 2015年3月30日
 '''
 import os
 import ConfigParser
+import time
 from common import Singleton
 from fileinfo import QFile
 
@@ -96,7 +97,7 @@ class Config(Singleton):
 		return self.__IgnoreInherit
 
 	def OutputDir(self):
-		return self.__OutputDir
+		return self.__ProjectRoot+"/"+self.__OutputDir
 
 	def PrevDir(self):
 		sPrevDir = self.__ProjectRoot+"/"+self.__PrevDir
@@ -106,4 +107,46 @@ class Config(Singleton):
 		return self.__ModuleName
 
 
+def default_wrap_content():
+	stime = time.strftime("%Y-%m-%d %H:%M", time.localtime(time.time()))
+	sMethodName = Config.getInstance().ModuleName()
+	sDefaultOut1 = """
+// -------------------------------------------------------------------------------
+// @Created     : %s
+// @Desc        : 程序自动封装
+// -------------------------------------------------------------------------------
+
+#include "py_cocos2dx_Wrap.h"
+#include "py_cocos2dx_OutMember.h"
+#include "py_cocos2dx_WrapClass.h"
+#include "cocos2d.h"
+#include <boost/python.hpp>
+#include <boost/utility.hpp>
+#include <memory>
+using namespace boost::python;
+
+#ifdef HELD_BY_AUTO_PTR
+# define HELD_PTR(X) , std::auto_ptr< X >
+#else
+# define HELD_PTR(X)
+#endif 
+"""%stime
+	#-----------------------------------------------------------------------
+	sDefaultOut2 = """
+void registerPymodule_%s()
+{
+	// 注册模块到解释器中
+	if (PyImport_AppendInittab(const_cast<char*>("%s"),
+#if PY_VERSION_HEX >= 0x03000000 
+		PyInit_%s
+#else 
+		init%s
+#endif 
+		) == -1)
+		throw std::runtime_error("把common作为内建模块加载到解释器失败");
+}
+//#include "module_tail.cpp"
+"""%(sMethodName,sMethodName,sMethodName,sMethodName)
+	#-----------------------------------------------------------------------
+	return sDefaultOut1.lstrip(), sDefaultOut2
 

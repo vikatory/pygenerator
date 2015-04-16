@@ -6,8 +6,9 @@ Created on 2015年3月30日
 @author: ming
 '''
 import re
+import iorelated
 from common import Singleton
-from iorelated import print_list
+from iorelated import print_list,write_file,Config
 from operate import match_pair
 
 
@@ -111,6 +112,43 @@ class Elements(Singleton):
 	def build_struct(self):
 		pass
 
+	def serialize_wrap(self):
+		sDefaultOut1,sDefaultOut2 = iorelated.default_wrap_content()
+		sClassOut = self.serialize_class()
+		sEnumOut = self.serialize_enum()
+		sStructOut = self.serialize_struct()
+		out = sDefaultOut1+sClassOut+sEnumOut+sStructOut+sDefaultOut2
+		return out
+
+	def serialize_class(self):
+		return ""
+
+	def serialize_enum(self):
+		return ""
+
+	def serialize_struct(self):
+		return ""
+
+	def generate(self):
+		self.generate_wrap_file()
+
+	def generate_wrap_file(self):
+		out = self.serialize_wrap()
+		sOutFileName = Config.getInstance().OutputDir()+"/py_cocos2dx_wrap_auto.cpp"
+		print sOutFileName
+		write_file(sOutFileName, out)
+
+	def in_listed_classes(self, class_name):
+		pass
+
+	def should_skip(self, class_name, method_name, verbose=False):
+		pass
+
+
+
+
+
+
 
 
 class sClass(object):
@@ -122,11 +160,14 @@ class sEnum(object):
 		self.__name = name
 		self.__namespace = namespace
 		self.__content = detail
-		self.parse_elem()
+		self.__elements = self.parse_elem()
 
 	def parse_elem(self):
 		print self.__content
-		pass
+		elements = filter(lambda x:x!="",
+					map(lambda x:x.strip(), self.__content.strip()[1:-1].split(",")))
+		elements = map(lambda x:x.partition("=")[0].strip(), elements)
+		return elements
 
 	def serialize(self):
 		pass
