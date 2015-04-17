@@ -57,6 +57,7 @@ class sContent(object):
 class Elements(Singleton):
 	def __init__(self):
 		self.__headers = []
+		self.__contents = []
 		self.__elements = []
 
 	def addHeaders(self, header, content, stype):
@@ -70,12 +71,12 @@ class Elements(Singleton):
 	def extend(self, header, lData, stype):
 		for breaf, detail in lData:
 			item = sContent(stype, header, breaf, detail)
-			self.__elements.append(item)
+			self.__contents.append(item)
 
 	def build_namespace(self):
 		for header in self.__headers:
 			headername = header.headername()
-			items = filter(lambda x:x.headername()==headername, self.__elements)
+			items = filter(lambda x:x.headername()==headername, self.__contents)
 			#-----------------------------------------------------------------
 			headerContent = header.detail()
 			cc = match_pair(headerContent, "NS_CC_BEGIN", "NS_CC_END")[1]
@@ -101,30 +102,45 @@ class Elements(Singleton):
 		pass
 
 	def build_enum(self):
-		items = filter(lambda x:x.type()=="enum", self.__elements)
+		items = filter(lambda x:x.type()=="enum", self.__contents)
 		for item in items:
 			name = item.name()
 			namespace = item.namespace()
 			detail = item.detail()
-			EnumObj = sEnum(name, namespace, detail)
-		print items
+			enumObj = sEnum(name, namespace, detail)
+			self.__elements.append(enumObj)
 
 	def build_struct(self):
 		pass
 
 	def serialize_wrap(self):
+		sMethodName = Config.getInstance().ModuleName()
 		sDefaultOut1,sDefaultOut2 = iorelated.default_wrap_content()
 		sClassOut = self.serialize_class()
 		sEnumOut = self.serialize_enum()
 		sStructOut = self.serialize_struct()
-		out = sDefaultOut1+sClassOut+sEnumOut+sStructOut+sDefaultOut2
+		out = ""
+		out += sDefaultOut1
+		out += "\n\n//暂时不需要封装构造函数\n"
+		out += "BOOST_PYTHON_MODULE(%s)\n"%sMethodName
+		out += "{\n"
+		out += "\t// %s\n"%("-"*80)
+		out += "\t// 枚举绑定\n"
+		out += "\t// %s\n"%("-"*80)
+		out += sEnumOut
+		out += sStructOut
+		out += sClassOut
+		out += "}\n"
+		out += sDefaultOut2
 		return out
 
 	def serialize_class(self):
 		return ""
 
 	def serialize_enum(self):
-		return ""
+		lEnumOuts = map(lambda x:x.serialize(), filter(lambda x:isinstance(x,sEnum), self.__elements))
+		out = "".join(lEnumOuts)
+		return out
 
 	def serialize_struct(self):
 		return ""
@@ -135,7 +151,6 @@ class Elements(Singleton):
 	def generate_wrap_file(self):
 		out = self.serialize_wrap()
 		sOutFileName = Config.getInstance().OutputDir()+"/py_cocos2dx_wrap_auto.cpp"
-		print sOutFileName
 		write_file(sOutFileName, out)
 
 	def in_listed_classes(self, class_name):
@@ -163,19 +178,23 @@ class sEnum(object):
 		self.__elements = self.parse_elem()
 
 	def parse_elem(self):
-		print self.__content
 		elements = filter(lambda x:x!="",
 					map(lambda x:x.strip(), self.__content.strip()[1:-1].split(",")))
 		elements = map(lambda x:x.partition("=")[0].strip(), elements)
 		return elements
 
 	def serialize(self):
-		pass
+		out = ""
+		out += "\tenum_<%s%s>(\"%s\")\n"%(self.__namespace,self.__name,self.__name)
+		for sElem in self.__elements:
+			out += "\t\t.value(\"%s\", %s%s::%s)\n"%(sElem,self.__namespace,self.__name,sElem)
+		out += "\t\t.export_values()\n"
+		out += "\t\t;\n"
+		return out
 
 class sStruct(object):
 	def __init__(self):
 		pass
-
 
 
 
