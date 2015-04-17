@@ -4,3 +4,4 @@ backup
 .project
 .pydevproject
 *.pyc
+.idea
