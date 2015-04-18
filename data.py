@@ -7,9 +7,9 @@ Created on 2015年3月30日
 '''
 import re
 import iorelated
+import operate
 from common import Singleton
 from iorelated import print_list,write_file,Config
-from operate import match_pair,Parser
 
 
 class sContent(object):
@@ -79,7 +79,7 @@ class Elements(Singleton):
 			items = filter(lambda x:x.headername()==headername, self.__contents)
 			#-----------------------------------------------------------------
 			headerContent = header.detail()
-			cc = match_pair(headerContent, "NS_CC_BEGIN", "NS_CC_END")[1]
+			cc = operate.match_pair(headerContent, "NS_CC_BEGIN", "NS_CC_END")[1]
 			for item in items:
 				if cc.find(item.detail())!=-1:
 					item.build_namespace("cocos2d")
@@ -93,6 +93,9 @@ class Elements(Singleton):
 						item.build_namespace(item_n.name())
 			# print_list(map(lambda x:(x.name(),x.namespace()), items))
 
+	def header_contents(self, headername):
+		return filter(lambda x:x.headername()==headername, self.__contents)
+
 	def build_element(self):
 		self.build_class()
 		self.build_enum()
@@ -104,7 +107,8 @@ class Elements(Singleton):
 			name = item.name()
 			namespace = item.namespace()
 			detail = item.detail()
-			classObj = sClass(name, namespace, detail)
+			header = item.headername()
+			classObj = sClass(name, namespace, detail, header)
 			self.__elements.append(classObj)
 
 	def build_enum(self):
@@ -173,11 +177,11 @@ class Elements(Singleton):
 
 
 class sClass(object):
-	def __init__(self, name, namespace, detail):
+	def __init__(self, name, namespace, detail, header):
 		self.__name = name
 		self.__namespace = namespace
 		self.__content = detail
-		members = Parser.getInstance().parse(detail, "extract_member")
+		members = operate.Parser.getInstance().parse(detail, "extract_member", header)
 		# self.__members = Parser.getInstance().parse(content, "extract_member")
 
 	def serialize(self):

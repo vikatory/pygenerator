@@ -58,6 +58,7 @@ def print_list(lData):
 	print "["
 	for x in lData:
 		print "\t", x
+		print "-----------------------------"
 	print "]"
 
 

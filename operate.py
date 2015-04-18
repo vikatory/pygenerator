@@ -6,15 +6,16 @@ Created on 2015年3月30日
 @author: ming
 '''
 import re
-from common import Singleton
 import iorelated
+from common import Singleton
+from data import Elements
 
 
 class Parser(Singleton):
 	def __init__(self):
 		pass
 
-	def parse(self, content, sParseType):
+	def parse(self, content, sParseType, *nkwargs, **kwargs):
 		if sParseType == "remove_comments":
 			result = PRemoveComments(content).result()
 			return result
@@ -31,7 +32,7 @@ class Parser(Singleton):
 			result = PExtractStruct(content).result()
 			return result
 		if sParseType == "extract_member":
-			result = PExtractMember(content).result()
+			result = PExtractMember(content, *nkwargs, **kwargs).result()
 			return result
 		if sParseType == "extract_func":
 			pass
@@ -169,11 +170,11 @@ class PExtractStruct(object):
 
 class PExtractMember(object):
 	''' 提取结构体的内容 '''
-	def __init__(self, content):
+	def __init__(self, content, header):
 		self.__content = content
+		self.__header = header
 
 	def extract_member(self):
-		print "-"*160
 		content = " "+self.__content+" "  # 兼容匹配
 		content = search_and_replace_all(content, "public\s+:", "public:")
 		content = search_and_replace_all(content, "protected\s+:", "protected:")
@@ -185,14 +186,62 @@ class PExtractMember(object):
 			skey = flag+key
 			lContents = filter(lambda m:m.split()!="",
 					  reduce(lambda a,x:a+x.split(flag), map(lambda s:s.replace(key,skey), lContents),[]))
-		lContents = filter(lambda x:x.strip().startswith("public:"), lContents)	
+		lContents = filter(lambda x:x.strip().startswith("public:"), lContents)
 		content = "".join(lContents)  # public部分
 		#-----------------------------------------------------------------------
+		content = search_and_replace_all_ex(" "+content, "[\s;\{\}]public:", "public:", "", True)
+		content = search_and_replace_all_ex(" "+content, "[\s;\{\}]CC_CONSTRUCTOR_ACCESS:", "CC_CONSTRUCTOR_ACCESS:", "", True)
+		content = content.replace("\n\n", "\n")
 		#-----------------------------------------------------------------------
+		lContents = []
+		b, m, e = match_pair(content, "#if", "#endif")
+		while m:
+			lContents.append(b)
+			lContents.append(m)
+			b, m, e = match_pair(e, "#if", "#endif")
+		else:
+			lContents.append(b)
+		lContents = lContents or [content]
+		#-----------------------------------------------------------------------
+		# 拆开#开头的
+		ltmp = []
+		for content in lContents:
+			if content.lstrip().startswith("#"):
+				b, m, e = match_pair(" "+content+"\n", "#", "\n")
+				while m:
+					ltmp.append(b)
+					ltmp.append(m)
+					b, m, e = match_pair(e, "#", "\n")
+				else:
+					ltmp.append(b)
+			else:
+				ltmp.append(content)
+		lContents = filter(lambda x:x.strip()!="", ltmp)
+		#-----------------------------------------------------------------------
+		content = search_and_replace_all(content, "\}\s+;", "\};")
+		# {}匹配完后，拆分
+		ltmp = []
+		for content in lContents:
+			if not content.lstrip().startswith("#"):
+				b, m, e = match_pair(content, "{", "};")
+				while m:
+					ltmp.append(b+m)
+					b, m, e = match_pair(e, "{", "};")
+				else:
+					ltmp.append(b)
+			else:
+				ltmp.append(content)
+		lContents = filter(lambda x:x.strip()!="", ltmp)
+		#-----------------------------------------------------------------------
+		# 剔除类，枚举，结构体等
+		#-----------------------------------------------------------------------
+		print self.__header
 		print "."*160
-		print content
+		iorelated.print_list(lContents)
+		# print content
 		# patt = re.compile("(?P<match>[\s;\{\}](typedef)?\s*struct\s[^\{\}]+\{)")
 		# matchs1 = patt.findall(content)
+		# AsyncStruct
 		lTmp = []
 		result = lTmp
 		#-----------------------------------------------------------------------
@@ -200,9 +249,6 @@ class PExtractMember(object):
 
 	def result(self):
 		return self.extract_member()
-
-
-
 
 
 
@@ -222,6 +268,19 @@ def search_and_replace_all(content, sPatt, sTar, bRstrip=False):
 		result = search_and_replace_all(result, " +\n", "\n")  # 删除\n前的空格
 	return result
 
+def search_and_replace_all_ex(content, sPatt, sOld, sNew, bRstrip=False):
+	patt = re.compile("(?P<match>%s)"%sPatt)
+	mo = patt.search(content)
+	while mo:
+		match = mo.group("match")
+		sTar = match.replace(sOld, sNew)
+		content = content.replace(match, sTar, 1)
+		mo = patt.search(content)
+	result = content
+	if bRstrip:
+		result = search_and_replace_all(result, " +\n", "\n")  # 删除\n前的空格
+	return result
+
 def search_and_replace_all_test(content, sPatt, sTar):
 	ocontent = content
 	patt = re.compile("(?P<match>%s)"%sPatt)
@@ -233,7 +292,7 @@ def search_and_replace_all_test(content, sPatt, sTar):
 		mo = patt.search(content)
 	return ocontent
 
-def match_pair(content, head, tail, pos=0):  # pos为匹配的开始位置
+def match_pair(content, head, tail, pos=0):  # pos为匹配的开始位置,好像匹配不了里面是空的，如{}
 	''' 匹配成对的模式，例如括号，if,endif等 '''
 	#-------------------------------------------------------------------------
 	iLeftCnt, iRightCnt, iLeft, iRight, iHeadLen, iTailLen = 0, 0, 0, 0, len(head), len(tail)
