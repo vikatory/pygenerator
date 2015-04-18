@@ -30,9 +30,10 @@ class Parser(Singleton):
 		if sParseType == "extract_struct":
 			result = PExtractStruct(content).result()
 			return result
-		if sParseType == "extract_func":
-			pass
 		if sParseType == "extract_member":
+			result = PExtractMember(content).result()
+			return result
+		if sParseType == "extract_func":
 			pass
 		return None
 
@@ -166,6 +167,39 @@ class PExtractStruct(object):
 		return self.extract_struct()
 
 
+class PExtractMember(object):
+	''' 提取结构体的内容 '''
+	def __init__(self, content):
+		self.__content = content
+
+	def extract_member(self):
+		print "-"*160
+		content = " "+self.__content+" "  # 兼容匹配
+		content = search_and_replace_all(content, "public\s+:", "public:")
+		content = search_and_replace_all(content, "protected\s+:", "protected:")
+		content = search_and_replace_all(content, "private\s+:", "private:")
+		#-----------------------------------------------------------------------
+		flag = "^_^"
+		lContents = [content]
+		for key in ["public:","protected:","private:"]:
+			skey = flag+key
+			lContents = filter(lambda m:m.split()!="",
+					  reduce(lambda a,x:a+x.split(flag), map(lambda s:s.replace(key,skey), lContents),[]))
+		lContents = filter(lambda x:x.strip().startswith("public:"), lContents)	
+		content = "".join(lContents)  # public部分
+		#-----------------------------------------------------------------------
+		#-----------------------------------------------------------------------
+		print "."*160
+		print content
+		# patt = re.compile("(?P<match>[\s;\{\}](typedef)?\s*struct\s[^\{\}]+\{)")
+		# matchs1 = patt.findall(content)
+		lTmp = []
+		result = lTmp
+		#-----------------------------------------------------------------------
+		return result
+
+	def result(self):
+		return self.extract_member()
 
 
 

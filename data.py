@@ -9,7 +9,7 @@ import re
 import iorelated
 from common import Singleton
 from iorelated import print_list,write_file,Config
-from operate import match_pair
+from operate import match_pair,Parser
 
 
 class sContent(object):
@@ -99,7 +99,13 @@ class Elements(Singleton):
 		self.build_struct()
 
 	def build_class(self):
-		pass
+		items = filter(lambda x:x.type()=="class", self.__contents)
+		for item in items:
+			name = item.name()
+			namespace = item.namespace()
+			detail = item.detail()
+			classObj = sClass(name, namespace, detail)
+			self.__elements.append(classObj)
 
 	def build_enum(self):
 		items = filter(lambda x:x.type()=="enum", self.__contents)
@@ -167,8 +173,21 @@ class Elements(Singleton):
 
 
 class sClass(object):
+	def __init__(self, name, namespace, detail):
+		self.__name = name
+		self.__namespace = namespace
+		self.__content = detail
+		members = Parser.getInstance().parse(detail, "extract_member")
+		# self.__members = Parser.getInstance().parse(content, "extract_member")
+
+	def serialize(self):
+		pass
+
+class sMember(object):
 	def __init__(self):
 		pass
+
+
 
 class sEnum(object):
 	def __init__(self, name, namespace, detail):
