@@ -223,27 +223,69 @@ class PExtractMember(object):
 		ltmp = []
 		for content in lContents:
 			if not content.lstrip().startswith("#"):
-				b, m, e = match_pair(content, "{", "};")
+				b, m, e = match_pair(content, "{", "}")
 				while m:
 					ltmp.append(b+m)
-					b, m, e = match_pair(e, "{", "};")
+					b, m, e = match_pair(e, "{", "}")
 				else:
 					ltmp.append(b)
 			else:
 				ltmp.append(content)
+		lContents = filter(lambda x:x.strip()!="", ltmp)  # 中括号一定是在最末了,非结尾处的;一定在中括号内
+		#-----------------------------------------------------------------------
+		ltmp = []
+		for content in lContents:
+			if not content.lstrip().startswith("#"):
+				b, m, e = match_pair(content, "{", "}")
+				lb = filter(lambda x:x.strip()!="", b.replace(";",";"+flag).split(flag))
+				if lb:
+					lb[-1] = lb[-1]+m+e
+				else:
+					lb = [m+e]
+				ltmp.extend(lb)
+			else:
+				ltmp.append(content)
 		lContents = filter(lambda x:x.strip()!="", ltmp)
 		#-----------------------------------------------------------------------
+		ltmp = []
+		for content in lContents:
+			if content.strip()==";":
+				if ltmp:
+					ltmp[-1] = ltmp[-1]+content.lstrip()
+			else:
+				ltmp.append(content)
+		lContents = filter(lambda x:x.strip()!="", ltmp)
+		#-----------------------------------------------------------------------
+		# 拆分完毕
+		#-----------------------------------------------------------------------
 		# 剔除类，枚举，结构体等
+		ltmp = []
+		for content in lContents:
+			if not content.lstrip().startswith("#"):
+				if content.find("{")!=-1:
+					b, m, e = match_pair(content, "{", "}")
+					if b.find("(")!=-1:
+						ltmp.append(content)
+				else:
+					ltmp.append(content)
+			else:
+				ltmp.append(content)
+		lContents = ltmp
+		#-----------------------------------------------------------------------
+		# 剔除类成员变量
+		ltmp = []
+		for content in lContents:
+			if not content.lstrip().startswith("#"):
+				if content.find("(")!=-1:
+					ltmp.append(content)
+			else:
+				ltmp.append(content)
+		lContents = ltmp  # 全是公有函数了
 		#-----------------------------------------------------------------------
 		print self.__header
 		print "."*160
 		iorelated.print_list(lContents)
-		# print content
-		# patt = re.compile("(?P<match>[\s;\{\}](typedef)?\s*struct\s[^\{\}]+\{)")
-		# matchs1 = patt.findall(content)
-		# AsyncStruct
-		lTmp = []
-		result = lTmp
+		result = []
 		#-----------------------------------------------------------------------
 		return result
 
@@ -251,7 +293,8 @@ class PExtractMember(object):
 		return self.extract_member()
 
 
-
+    # template <typename T>
+    # inline T getChildByName(const std::string& name) const { return static_cast<T>(getChildByName(name)); }
 
 
 
@@ -292,8 +335,9 @@ def search_and_replace_all_test(content, sPatt, sTar):
 		mo = patt.search(content)
 	return ocontent
 
-def match_pair(content, head, tail, pos=0):  # pos为匹配的开始位置,好像匹配不了里面是空的，如{}
+def match_pair(content, head, tail, pos=0, direction="l"):  # pos为匹配的开始位置
 	''' 匹配成对的模式，例如括号，if,endif等 '''
+	# 有一个问题，如在"{}{};"中匹配("{","};")前面的会对后面产生影响，导致匹配不成功
 	#-------------------------------------------------------------------------
 	iLeftCnt, iRightCnt, iLeft, iRight, iHeadLen, iTailLen = 0, 0, 0, 0, len(head), len(tail)
 	content = content[pos:]
