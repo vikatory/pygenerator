@@ -186,18 +186,37 @@ class sClass(object):
 
 	def build_member(self, members):
 		print "."*160
-		iorelated.print_list(members)
+		# iorelated.print_list(members)
+		classname = self.__name
+		namespace = self.__namespace
+		lMembers = []
 		for memebr in members:
-			member_data = operate.Parser.getInstance().parse(memebr, "parse_member")
+			if not memebr.strip().startswith("#"):
+				member_data = operate.Parser.getInstance().parse(memebr, "parse_member")
+				prefix,returntype,membername,param,lParam,suffix,body = member_data
+				memberobj = sMember(prefix,returntype,membername,param,lParam,suffix,body,classname,namespace)
+				lMembers.append(memberobj)
+			else:
+				lMembers.append(memebr)
+		return lMembers
+
+	def serialize_wrap_class(self):
 		pass
 
 	def serialize(self):
 		pass
 
 class sMember(object):
-	def __init__(self):
-		pass
-
+	def __init__(self,prefix,returntype,membername,param,lParam,suffix,body,classname,namespace):
+		self.__prefix = prefix
+		self.__returntype = returntype
+		self.__membername = membername
+		self.__param = param
+		self.__param_info = lParam
+		self.__suffix = suffix
+		self.__body = body
+		self.__classname = classname
+		self.__namespace = namespace
 
 	def serialize(self, bComment=False):
 		pass

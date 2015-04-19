@@ -292,18 +292,75 @@ class PExtractMember(object):
 	def result(self):
 		return self.extract_member()
 
-    # template <typename T>
-    # inline T getChildByName(const std::string& name) const { return static_cast<T>(getChildByName(name)); }
+# template <typename T>
+# inline T getChildByName(const std::string& name) const { return static_cast<T>(getChildByName(name)); }
+# ['const std::function<void(float)>& callback', 'const std::string &key']
 class PParseMember(object):
 	''' 解析类成员函数的内容 '''
 	def __init__(self, content):
 		self.__content = content
 
 	def parse_member(self):
-		content = " "+self.__content+" "  # 兼容匹配
-		patt = re.compile("(?P<match>[\s;\{\}](typedef)?\s*struct\s[^\{\}]+\{)")
-		matchs1 = patt.findall(content)
-		result = []
+		content = self.__content
+		content, body, e = match_pair(content, "{", "}")
+		content = content.strip()
+		content, param, suffix = match_pair(content, "(", ")")
+		suffix = search_and_replace_all(suffix, "=\s+0", "=0")
+		content = content.replace("\n", " ")
+		content = search_and_replace_all_ex(content, "~\s+[^\s]", " ", "")
+		content = content.strip()
+		content = content.replace("*", "* ")
+		content = content.replace("&", "& ")
+		idx = content.rfind(" ")
+		if idx!=-1:
+			content, membername = content[:idx+1], content[idx+1:]
+		else:
+			content, membername = "", content
+		membername = membername.strip()
+		content = content.strip()
+		content = search_and_replace_all_ex(content, "\*\s+[^\s]", " ", "")
+		content = search_and_replace_all_ex(content, "[^\s]\s+\*", " ", "")
+		content = search_and_replace_all_ex(content, "&\s+[^\s]", " ", "")
+		content = search_and_replace_all_ex(content, "[^\s]\s+&", " ", "")
+		content = search_and_replace_all_ex(content, "::\s+[^\s]", " ", "")
+		content = search_and_replace_all_ex(content, "[^\s]\s+::", " ", "")
+		idx = content.rfind(" ")
+		if idx!=-1:
+			content, returntype = content[:idx+1], content[idx+1:]
+		else:
+			content, returntype = "", content
+		prefix = content.strip()
+		returntype = returntype.strip()
+		param = param.strip()
+		param_content = param[1:-1]
+		lParam = filter(lambda x:x!="", map(lambda p:p.strip(), param_content.split(",")))
+		lParam = [] if lParam==["void"] else lParam
+		ltmp = []
+		for sparam in lParam:
+			sparam = sparam.replace("*", "* ")
+			sparam = sparam.replace("&", "& ")
+			idx = sparam.rfind(" ")
+			paramtype, paramname = sparam[:idx+1], sparam[idx+1:]
+			paramtype = paramtype.strip()
+			paramname = paramname.strip()
+			paramtype = search_and_replace_all_ex(paramtype, "\*\s+[^\s]", " ", "")
+			paramtype = search_and_replace_all_ex(paramtype, "[^\s]\s+\*", " ", "")
+			paramtype = search_and_replace_all_ex(paramtype, "&\s+[^\s]", " ", "")
+			paramtype = search_and_replace_all_ex(paramtype, "[^\s]\s+&", " ", "")
+			paramtype = search_and_replace_all_ex(paramtype, "::\s+[^\s]", " ", "")
+			paramtype = search_and_replace_all_ex(paramtype, "[^\s]\s+::", " ", "")
+			# 先这样吧
+			idx = paramtype.rfind(" ")
+			if idx!=-1:
+				paramprefix, paramtype = paramtype[:idx+1], paramtype[idx+1:]
+			else:
+				paramprefix, paramtype = "", paramtype
+			paramprefix = paramprefix.strip()
+			paramtype = paramtype.strip()
+			ltmp.append( (paramprefix,paramtype,paramname) )
+		lParam = ltmp
+		#-----------------------------------------------------------------------
+		result = prefix,returntype,membername,param,lParam,suffix,body
 		#-----------------------------------------------------------------------
 		return result
 
