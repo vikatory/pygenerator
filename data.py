@@ -182,7 +182,14 @@ class sClass(object):
 		self.__namespace = namespace
 		self.__content = detail
 		members = operate.Parser.getInstance().parse(detail, "extract_member", header)
-		# self.__members = Parser.getInstance().parse(content, "extract_member")
+		self.__members = self.build_member(members)
+
+	def build_member(self, members):
+		print "."*160
+		iorelated.print_list(members)
+		for memebr in members:
+			member_data = operate.Parser.getInstance().parse(memebr, "parse_member")
+		pass
 
 	def serialize(self):
 		pass
@@ -192,6 +199,8 @@ class sMember(object):
 		pass
 
 
+	def serialize(self, bComment=False):
+		pass
 
 class sEnum(object):
 	def __init__(self, name, namespace, detail):

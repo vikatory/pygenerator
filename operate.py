@@ -36,6 +36,9 @@ class Parser(Singleton):
 			return result
 		if sParseType == "extract_func":
 			pass
+		if sParseType == "parse_member":
+			result = PParseMember(content).result()
+			return result
 		return None
 
 
@@ -169,7 +172,7 @@ class PExtractStruct(object):
 
 
 class PExtractMember(object):
-	''' 提取结构体的内容 '''
+	''' 提取类成员函数的内容 '''
 	def __init__(self, content, header):
 		self.__content = content
 		self.__header = header
@@ -280,21 +283,46 @@ class PExtractMember(object):
 					ltmp.append(content)
 			else:
 				ltmp.append(content)
-		lContents = ltmp  # 全是公有函数了
+		lContents = map(lambda x:x.strip(), ltmp)
 		#-----------------------------------------------------------------------
-		print self.__header
-		print "."*160
-		iorelated.print_list(lContents)
-		result = []
+		result = lContents
 		#-----------------------------------------------------------------------
 		return result
 
 	def result(self):
 		return self.extract_member()
 
-
     # template <typename T>
     # inline T getChildByName(const std::string& name) const { return static_cast<T>(getChildByName(name)); }
+class PParseMember(object):
+	''' 解析类成员函数的内容 '''
+	def __init__(self, content):
+		self.__content = content
+
+	def parse_member(self):
+		content = " "+self.__content+" "  # 兼容匹配
+		patt = re.compile("(?P<match>[\s;\{\}](typedef)?\s*struct\s[^\{\}]+\{)")
+		matchs1 = patt.findall(content)
+		result = []
+		#-----------------------------------------------------------------------
+		return result
+
+	def result(self):
+		return self.parse_member()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
