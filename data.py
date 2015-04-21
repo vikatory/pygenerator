@@ -217,6 +217,19 @@ class sMember(object):
 		self.__body = body
 		self.__classname = classname
 		self.__namespace = namespace
+		#-----------------------------------------------------------------------
+		self.__isStatic = prefix.find("static")!=-1
+		self.__isVirtual = prefix.find("virtual")!=-1
+		self.__isPureVirtual = self.__isVirtual and suffix.find("=0")!=-1
+		#-----------------------------------------------------------------------
+		self.__isReturnNativeType = self.isReturnNativeType(returntype)
+		# print prefix
+		# print suffix
+		print self.__isPureVirtual
+
+	def isReturnNativeType(self, returntype):
+		bFlag = returntype in ["void","int","unsigned int"]
+		return bFlag
 
 	def serialize(self, bComment=False):
 		pass
